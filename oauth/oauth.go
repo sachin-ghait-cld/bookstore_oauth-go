@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/federicoleon/golang-restclient/rest"
-	"github.com/sachin-ghait-cld/bookstore_oauth-go/oauth/errors"
+	"github.com/sachin-ghait-cld/bookstore_utils-go/rest_errors"
 )
 
 const (
@@ -66,7 +66,7 @@ func GetClientID(req *http.Request) int64 {
 	return clientID
 }
 
-func AuthenticateRequest(req *http.Request) *errors.RestErr {
+func AuthenticateRequest(req *http.Request) *rest_rest_errors.RestErr {
 	if req == nil {
 		return nil
 	}
@@ -95,21 +95,21 @@ func cleanRequest(req *http.Request) {
 	req.Header.Del(headerXCallerID)
 }
 
-func getAccessToken(accessTokenID string) (*accessToken, *errors.RestErr) {
+func getAccessToken(accessTokenID string) (*accessToken, *rest_rest_errors.RestErr) {
 	resp := oauthRestClient.Get(fmt.Sprintf("/oauth/access_token/%s", accessTokenID))
 	if resp == nil || resp.Response == nil {
-		return nil, errors.NewInternalServerError("Invalid response when trying to get user")
+		return nil, rest_errors.NewInternalServerError("Invalid response when trying to get user")
 	}
 	if resp.StatusCode > 299 {
-		var restErr errors.RestErr
+		var restErr rest_errors.RestErr
 		if err := json.Unmarshal(resp.Bytes(), &restErr); err != nil {
-			return nil, errors.NewInternalServerError("Invalid error interface")
+			return nil, rest_errors.NewInternalServerError("Invalid error interface")
 		}
 		return nil, &restErr
 	}
 	var token accessToken
 	if err := json.Unmarshal(resp.Bytes(), &token); err != nil {
-		return nil, errors.NewInternalServerError("invalid user interface")
+		return nil, rest_errors.NewInternalServerError("invalid user interface")
 	}
 	return &token, nil
 }
