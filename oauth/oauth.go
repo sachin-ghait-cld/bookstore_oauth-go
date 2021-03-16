@@ -2,6 +2,7 @@ package oauth
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -66,7 +67,7 @@ func GetClientID(req *http.Request) int64 {
 	return clientID
 }
 
-func AuthenticateRequest(req *http.Request) *rest_rest_errors.RestErr {
+func AuthenticateRequest(req *http.Request) *rest_errors.RestErr {
 	if req == nil {
 		return nil
 	}
@@ -95,21 +96,21 @@ func cleanRequest(req *http.Request) {
 	req.Header.Del(headerXCallerID)
 }
 
-func getAccessToken(accessTokenID string) (*accessToken, *rest_rest_errors.RestErr) {
+func getAccessToken(accessTokenID string) (*accessToken, *rest_errors.RestErr) {
 	resp := oauthRestClient.Get(fmt.Sprintf("/oauth/access_token/%s", accessTokenID))
 	if resp == nil || resp.Response == nil {
-		return nil, rest_errors.NewInternalServerError("Invalid response when trying to get user")
+		return nil, rest_errors.NewInternalServerError("Invalid response when trying to get user", errors.New("error getting response"))
 	}
 	if resp.StatusCode > 299 {
 		var restErr rest_errors.RestErr
 		if err := json.Unmarshal(resp.Bytes(), &restErr); err != nil {
-			return nil, rest_errors.NewInternalServerError("Invalid error interface")
+			return nil, rest_errors.NewInternalServerError("Invalid error interface", errors.New("json unmarshal err"))
 		}
 		return nil, &restErr
 	}
 	var token accessToken
 	if err := json.Unmarshal(resp.Bytes(), &token); err != nil {
-		return nil, rest_errors.NewInternalServerError("invalid user interface")
+		return nil, rest_errors.NewInternalServerError("invalid user interface", errors.New("json unmarshal err"))
 	}
 	return &token, nil
 }
