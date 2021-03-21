@@ -67,7 +67,7 @@ func GetClientID(req *http.Request) int64 {
 	return clientID
 }
 
-func AuthenticateRequest(req *http.Request) *rest_errors.RestErr {
+func AuthenticateRequest(req *http.Request) rest_errors.RestErr {
 	if req == nil {
 		return nil
 	}
@@ -78,7 +78,7 @@ func AuthenticateRequest(req *http.Request) *rest_errors.RestErr {
 	}
 	at, err := getAccessToken(accesstoken)
 	if err != nil {
-		if err.Status == http.StatusNotFound {
+		if err.Status() == http.StatusNotFound {
 			return nil
 		}
 		return err
@@ -96,7 +96,7 @@ func cleanRequest(req *http.Request) {
 	req.Header.Del(headerXCallerID)
 }
 
-func getAccessToken(accessTokenID string) (*accessToken, *rest_errors.RestErr) {
+func getAccessToken(accessTokenID string) (*accessToken, rest_errors.RestErr) {
 	resp := oauthRestClient.Get(fmt.Sprintf("/oauth/access_token/%s", accessTokenID))
 	if resp == nil || resp.Response == nil {
 		return nil, rest_errors.NewInternalServerError("Invalid response when trying to get user", errors.New("error getting response"))
@@ -106,7 +106,7 @@ func getAccessToken(accessTokenID string) (*accessToken, *rest_errors.RestErr) {
 		if err := json.Unmarshal(resp.Bytes(), &restErr); err != nil {
 			return nil, rest_errors.NewInternalServerError("Invalid error interface", errors.New("json unmarshal err"))
 		}
-		return nil, &restErr
+		return nil, restErr
 	}
 	var token accessToken
 	if err := json.Unmarshal(resp.Bytes(), &token); err != nil {
